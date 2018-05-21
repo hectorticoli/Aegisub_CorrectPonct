@@ -1,6 +1,6 @@
 ﻿--[[
 	 CorrectPonct
-	 Copyright (C) 2014-2016 LeSaint
+	 Copyright (C) 2014-2018 LeSaint
 
 	 To contact me (bug report / evol) : LeSaint_Fansub {at} hotmail {dot} fr
 	 This program is free software: you can redistribute it and/or modify
@@ -19,6 +19,10 @@
 
 --[[
 Release Note:
+v1.8
+- traitement des guillemets multi-lignes (beta). Si un guillemet est en trop sur une ligne, l'activation de cette option peut inverser les guillemets de toutes les lignes suivantes. 
+Le comportement classique permet de marquer les lignes avec un nombre impair de guillemets droits, en laissant inchangé les guillemets FR (pas de modification si l'utilisateur a déjà fait les saisies à la main).
+
 v1.7
 - effet de bord avec des espaces autour de \N sur une correction en 1.6
 
@@ -78,6 +82,7 @@ v1.0beta2 :
 	UseSuspChar = false
 	UseRealApostroph = false
 	UseEspaceInsec = false
+	UseMultiLine = false
 	
 	-- function: create_adjust_config
 	-- purpose: create config structure for adjust GUI.
@@ -118,18 +123,23 @@ v1.0beta2 :
 				label = "Utiliser l'espace insécable avant les double ponctuation",
 				x = 0, y = 5, width = 4, height = 1,
 				value = UseEspaceInsec, hint = "Utiliser l'espace insécable avant les double ponctuation"
-			},		
+			},
 			t_fineEspLabel = {
 				class = "label",
 				x = 0, y = 6, width = 1, height = 1,
 				label = "Espace insécable fine : "
-			},			
+			},
 			t_espfine = {
 				class = "dropdown", name = "t_espfine",
 				x = 1, y = 6, width = 2, height = 1,
 				items = {"Oui", 'Non'}, value = "Oui", hint = "Indique si l'espace insécable fine doit être utilisée."
+			},
+			MultiLineMngt = {
+				class = "checkbox", name = "MultiLineMngt", 
+				label = "Traiter les guillemets sur plusieurs lignes (beta)",
+				x = 0, y = 7, width = 4, height = 1,
+				value = UseMultiLine, hint = "Identifie l'ouverture / fermeture de guillemets entre plusieurs lignes. (beta)"
 			}
-		
 		}
 		return conf
 	end	
@@ -158,7 +168,7 @@ v1.0beta2 :
 				UseEspInsecFine = false
 			end			
 			
-			CorrigePonctuationMain(subs, IdxGuil, config.EspInsec, UseEspInsecFine , config.SuspChar, config.Apost)
+			CorrigePonctuationMain(subs, IdxGuil, config.EspInsec, UseEspInsecFine , config.SuspChar, config.Apost, config.MultiLineMngt)
 			aegisub.set_undo_point("Correction ponctuation")
 		end			
 	end
@@ -237,11 +247,13 @@ v1.0beta2 :
 	-- @subs: table des sous-titres
 	-- @iTypeGuillemets: type de guillemets utilisés (1 = guillemets FR (« ») ; 2 = guillemets anglais (" "))
 	-- return: /
-	function CorrigePonctuationMain(subs, iTypeGuillemets, iUseEspaceInsec, iUseEspInsecFine, iUseSuspChar, iUseApost)
+	function CorrigePonctuationMain(subs, iTypeGuillemets, iUseEspaceInsec, iUseEspInsecFine, iUseSuspChar, iUseApost, iUseMultiLineMngt)
 	
 		local firstlineIdx=nil -- indice de première ligne de sous titre
 		local sub
 		local Text
+		local shiftGuillemet=0
+		local UseMultiLine = (iUseMultiLineMngt and iTypeGuillemets==1)
 		
 		InitData()
 		
@@ -256,7 +268,16 @@ v1.0beta2 :
 				end
 				
 				if not sub.comment then
-					Text = CorrigePonctLigne(sub.text, iTypeGuillemets, iUseEspaceInsec, iUseEspInsecFine, iUseSuspChar, iUseApost)
+					aegisub.log(5,"shiftGuillemet : " .. shiftGuillemet .. "\n")
+					
+					Text = sub.text
+					-- correction "facile" pour gérer le multi-lignes: faire une première passe pour repasser en guillemets anglais
+					if UseMultiLine then
+						Text = CorrigePonctLigne(Text, 2, iUseEspaceInsec, iUseEspInsecFine, iUseSuspChar, iUseApost, false, 0)
+						Text = Text:Replace(ErrGuillTag, "")
+					end
+
+					Text, shiftGuillemet = CorrigePonctLigne(Text, iTypeGuillemets, iUseEspaceInsec, iUseEspInsecFine, iUseSuspChar, iUseApost, UseMultiLine, shiftGuillemet)
 					sub.text = Text
 					subs[i] = sub
 				end
@@ -276,8 +297,10 @@ v1.0beta2 :
 	-- @iUseEspInsecFine : Si les espaces insécables sont utilisés, indique si l'espace insécable fine doit être utilisée
 	-- @iUseSuspChar : indique si le caractère "…" doit être utilisé pour les points de suspension
 	-- @iUseApost : indique si le caractère apostrophe doit être utilisé
+	-- @iUseMultiLineMngt : indique si la gestion multi-ligne est activée.
+	-- @iShiftGuillemets : décallage d'indice sur les guillemets (pour Français uniquement). 0 pour aucun décallage, 1 pour indiquer d'un guillemet a été ouvert dans une ligne précédente.
 	-- @return : Ligne avec ponctuation corrigée
-	function CorrigePonctLigne(iText, iTypeGuillements, iUseEspaceInsec, iUseEspInsecFine, iUseSuspChar, iUseApost)
+	function CorrigePonctLigne(iText, iTypeGuillements, iUseEspaceInsec, iUseEspInsecFine, iUseSuspChar, iUseApost, iUseMultiLineMngt, iShiftGuillemets)
 		local MainStr = iText
 		local splitstringtext, splitstringtag = {}, {}
 		local tmpsplitstring = {}
@@ -286,7 +309,8 @@ v1.0beta2 :
 		local tmpstring, tmpstring2
 		local ProblemeGuillemets = false
 		local mod1
-				
+		local newShiftGuillemets = iShiftGuillemets
+
 		-- Séparation des tags de la chaine de texte :
 		-- Préparation des tags consécutifs pour les laisser ensemble :
 		aegisub.log(5,"Préparation des tags consécutifs pour les laisser ensemble :\n")
@@ -429,19 +453,31 @@ v1.0beta2 :
 		
 		-- Génération de la phrase avec les nouveaux guillemets :
 		aegisub.log(5,"Génération de la phrase avec les nouveaux guillemets :\n")
+		
 		if tmpsplitstring ~= nil then 
 			local idxguillemet
-		
+			local shiftguillemet = 0
+
 			tmpstring = tmpsplitstring[1]
+			if iUseMultiLineMngt then
+				aegisub.log(5, "Gestion multi-lignes : utilisation de l'indice de décallage.\n")
+				shiftguillemet=iShiftGuillemets
+			end
 			for ifor1 = 2, #tmpsplitstring do
-				idxguillemet = 2-((ifor1+1) % 2) -- on converti l'indice en modulo 2 (1 ou 2) pour récupérer l'indice du guillemet dans m_GuillemetsFR
+				idxguillemet = 2-((ifor1+1+shiftguillemet) % 2) -- on converti l'indice en modulo 2 (1 ou 2) pour récupérer l'indice du guillemet dans m_GuillemetsFR
 				tmpstring = tmpstring .. " " .. m_GuillemetsFR[idxguillemet] .. " " .. tmpsplitstring[ifor1]
 			end
-			if mod1 == 0 then
+
+			if mod1 == 0 and not iUseMultiLineMngt then
 				-- Problème sur le nombre de guillemets trouvés
 				aegisub.log(5,"Problème sur le nombre de guillemets trouvés\n")
 				ProblemeGuillemets = true
-			end		
+			end
+			if iUseMultiLineMngt then				
+				-- Mise à jour du shift sur les guillemets (prise en compte des guillemets sur plusieurs lignes)
+				newShiftGuillemets = (shiftguillemet+mod1+1) % 2
+				aegisub.log(5, "Gestion multi-lignes : mise à jour de l'indice de décallage. " .. shiftguillemet .. ", " .. mod1 .. ", " .. newShiftGuillemets .. "\n")
+			end
 			MainStr = tmpstring
 		end
 		aegisub.log(5,MainStr .. "\n\n")
@@ -606,10 +642,10 @@ v1.0beta2 :
 		while MainStr:Contains(ErrGuillTag .. ErrGuillTag) do
 			MainStr = MainStr:Replace(ErrGuillTag .. ErrGuillTag, ErrGuillTag)
 		end
-				
+		
 		aegisub.log(5,MainStr .. "\n\n")
 		aegisub.log(5,"\n\n")
-		return MainStr
+		return MainStr, newShiftGuillemets
 	end
 
 	-- function: string:split	
