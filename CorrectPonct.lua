@@ -17,11 +17,30 @@
 	 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
+--[[
+Release Note:
+v1.3
+- espace insécable autour des guillemets français si utilisation de l'espace insécable demandé
+
+v1.2
+- Prise en charge des nombres décimaux (pas d'espace après . ou , si c'est un séparateur décimal)
+- Prise en compte des symboles monétaires ($, £, € et ¥ pris en charge)
+- Prise en compte des acronymes (composés d'un ensemble de lettres majuscules, chacune suivie d'un point, comme "A.C.M.E") (idée de Fenounet)
+- Remplacement des doubles apostrophes (droites ou non) comme des guillemets. (idée de Fenounet)
+
+v1.1
+- Correction de bug : Lors d'un texte contenant "\N(", le \ devant le N était dupliqué à chaque exécution. (Merci Jikan ^^)
+
+v1.0beta2 :
+- Ajout du choix des points de suspension, de l'utilisation des espaces insécables et du type d'apostrophe
+
+]]
+
 	script_author = "LeSaint"
-	script_version = "1.2"
+	script_version = "1.3"
 	script_name = "Correction Ponctuation v" .. script_version
 	script_description = "Corrige la ponctuation du script courant."
-	script_modified = "20th May 2012"
+	script_modified = "21st Dec 2013"
 
 	m_Ponctuation = {}
 	m_CurrencyUnits = {}
@@ -489,6 +508,8 @@
 				MainStr = MainStr:Replace(" " .. tmpstring, " " .. tmpstring)
 				MainStr = MainStr:Replace(" " .. TagReplacement .. tmpstring, " " .. tmpstring)
 			end
+			MainStr = MainStr:Replace("« ", "« ")
+			MainStr = MainStr:Replace(" »", " »")	
 		end
 		
 		if iUseApost then
