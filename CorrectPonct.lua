@@ -19,6 +19,9 @@
 
 --[[
 Release Note:
+v1.4
+- correction pour prise en charge nouvelle version aegisub (à partir de 3.1)
+
 v1.3
 - espace insécable autour des guillemets français si utilisation de l'espace insécable demandé
 
@@ -37,10 +40,10 @@ v1.0beta2 :
 ]]
 
 	script_author = "LeSaint"
-	script_version = "1.3"
+	script_version = "1.4"
 	script_name = "Correction Ponctuation v" .. script_version
 	script_description = "Corrige la ponctuation du script courant."
-	script_modified = "21st Dec 2013"
+	script_modified = "8th Sept 2014"
 
 	m_Ponctuation = {}
 	m_CurrencyUnits = {}
@@ -111,14 +114,15 @@ v1.0beta2 :
 	function load_macro_ponct(subs,sel)
 		local IdxGuil
 		local buttons = {"OK", "Annuler"}
-		ok, config = aegisub.dialog.display(create_ponct_config(subs))
+		ok, config = aegisub.dialog.display(create_ponct_config(subs), buttons)
+		
 		if ok=="OK" or ok==true then
+			
 			if config.t_guil == "Français (« »)" then
 				IdxGuil = eTypeGuillemets.GuillemetsFR
 			else
 				IdxGuil = eTypeGuillemets.GuillemetsDroits
 			end
-			-- aegisub.log(2,"CorrigePonctuationMain(subs, IdxGuil)\n")
 			CorrigePonctuationMain(subs, IdxGuil, config.EspInsec, config.SuspChar, config.Apost)
 			aegisub.set_undo_point("Correction ponctuation")
 		end			
@@ -299,7 +303,7 @@ v1.0beta2 :
 		
 		if ProblemeGuillemets then
 			aegisub.log(5,"Notification de problème de guillemets\n")
-			MainStr = "\{ErrGuillemets\}" .. MainStr
+			MainStr = "{ErrGuillemets}" .. MainStr
 		end			
 		
 		-- On recrée les groupes de ponctuation ! et ?
@@ -484,7 +488,7 @@ v1.0beta2 :
 		
 		if ProblemeGuillemets then
 			aegisub.log(5,"Notification de problème de guillemets\n")
-			MainStr = "\{ErrGuillemets\}" .. MainStr
+			MainStr = "{ErrGuillemets}" .. MainStr
 		end			
 		
 		-- cas particulier des acronymes :
