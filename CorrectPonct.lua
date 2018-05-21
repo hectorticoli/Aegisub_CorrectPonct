@@ -19,6 +19,9 @@
 
 --[[
 Release Note:
+v1.7
+- effet de bord avec des espaces autour de \N sur une correction en 1.6
+
 v1.6
 - correction d'espaces restant avant un \N lors d'exécutions successives du script
 - mauvais espaces autour de guillemets si entouré d'apostrophe.
@@ -480,6 +483,16 @@ v1.0beta2 :
 		MainStr = MainStr:Replace(SuspReplacement, "... ")
 		aegisub.log(5,MainStr .. "\n\n")
 		
+		-- Retrait des doubles espaces :
+		aegisub.log(5,"Retrait des doubles espaces :\n")
+		while MainStr:Contains("  ") do
+			MainStr = MainStr:Replace("  ", " ")
+		end
+		while MainStr:Contains(" " .. TagReplacement .. " ") do
+			MainStr = MainStr:Replace(" " .. TagReplacement .. " ", " " .. TagReplacement)
+		end
+		aegisub.log(5,MainStr .. "\n\n")
+		
 		-- Si on a des retours à la ligne par \N, on vérifie qu'il n'y a pas d'espace autour :
 		aegisub.log(5,"Si on a des retours à la ligne par \\N, on vérifie qu'il n'y a pas d'espace autour :\n")
 		MainStr = MainStr:Replace(" \\N", "\\N")
@@ -513,15 +526,7 @@ v1.0beta2 :
 		end	
 		aegisub.log(5,MainStr .. "\n\n")
 
-		-- Retrait des doubles espaces :
-		aegisub.log(5,"Retrait des doubles espaces :\n")
-		while MainStr:Contains("  ") do
-			MainStr = MainStr:Replace("  ", " ")
-		end
-		while MainStr:Contains(" " .. TagReplacement .. " ") do
-			MainStr = MainStr:Replace(" " .. TagReplacement .. " ", " " .. TagReplacement)
-		end
-		aegisub.log(5,MainStr .. "\n\n")
+
 		
 		-- rectification d'effet de bord sur le % et les monnaies :
 		aegisub.log(5,"Rectification d'effet de bord sur le % et les monnaies\n")
