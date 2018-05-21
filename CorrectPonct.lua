@@ -18,20 +18,25 @@
 ]]
 
 	script_author = "LeSaint"
-	script_version = "1.0 beta"
+	script_version = "1.0 beta2"
 	script_name = "Correction Ponctuation v" .. script_version
 	script_description = "Corrige la ponctuation du script courant."
 	script_modified = "20th November 2011"
 
 	m_Ponctuation = {}
 	m_DblePonct = {}
-	m_DblePoints = {}
+	m_DblePtsnCo = {}
 	m_PointVirgule = {}
 	m_GuillemetsFR = {}
 	eTypeGuillemets = {}
 
 	eTypeGuillemets.GuillemetsFR = 1
 	eTypeGuillemets.GuillemetsDroits = 2
+
+	-- Valeurs par défaut
+	UseSuspChar = false
+	UseRealApostroph = false
+	UseEspaceInsec = false
 	
 	-- function: create_adjust_config
 	-- purpose: create config structure for adjust GUI.
@@ -47,14 +52,33 @@
 			},
 			t_titre = {
 				class = "label",
-				x = 0, y = 2, width = 1, height = 1,
+				x = 0, y = 2, width = 1, height = 2,
 				label = "Type de guillemets : "
 			},
 			t_guil = {
 				class = "dropdown", name = "t_guil",
-				x = 1, y = 2, width = 5, height = 2,
+				x = 1, y = 2, width = 2, height = 2,
 				items = {"Français (« »)", 'Droits (" ")'}, value = "Français (« »)", hint = "Type de guillemets utilisés."
 			},
+
+			EspInsec = {
+				class = "checkbox", name = "EspInsec", 
+				label = "Utiliser l'espace insécable avant les double ponctuation",
+				x = 0, y = 4, width = 4, height = 1,
+				value = UseEspaceInsec, hint = "Utiliser l'espace insécable avant les double ponctuation"
+			},		
+			SuspChar = {
+				class = "checkbox", name = "SuspChar", 
+				label = "Utiliser … au lieu de ...",
+				x = 0, y = 5, width = 1, height = 1,
+				value = UseSuspChar, hint = "Utiliser … au lieu de ..."
+			},
+			Apost = {
+				class = "checkbox", name = "Apost", 
+				label = 'Utiliser ' .. "’" .. ' au lieu de ' .. "'",
+				x = 1, y = 5, width = 1, height = 1,
+				value = UseRealApostroph, hint = 'Utiliser ' .. "’" .. ' au lieu de ' .. "'"
+			}			
 		}
 		return conf
 	end	
@@ -66,15 +90,16 @@
 	-- return: /
 	function load_macro_ponct(subs,sel)
 		local IdxGuil
+		local buttons = {"OK", "Annuler"}
 		ok, config = aegisub.dialog.display(create_ponct_config(subs))
-		if ok==true then
+		if ok=="OK" or ok==true then
 			if config.t_guil == "Français (« »)" then
 				IdxGuil = eTypeGuillemets.GuillemetsFR
 			else
 				IdxGuil = eTypeGuillemets.GuillemetsDroits
 			end
 			-- aegisub.log(2,"CorrigePonctuationMain(subs, IdxGuil)\n")
-			CorrigePonctuationMain(subs, IdxGuil)
+			CorrigePonctuationMain(subs, IdxGuil, config.EspInsec, config.SuspChar, config.Apost)
 			aegisub.set_undo_point("Correction ponctuation")
 		end			
 	end
@@ -96,15 +121,19 @@
         table.insert(m_Ponctuation,"(")
         table.insert(m_Ponctuation,")")
         table.insert(m_Ponctuation,"'")
+		table.insert(m_Ponctuation,"’")
+		table.insert(m_Ponctuation,"%")
+		
 		aegisub.log(5,"#m_Ponctuation: " .. #m_Ponctuation .. "\n")
 
         table.insert(m_DblePonct,"!")
         table.insert(m_DblePonct,"?")	
 		aegisub.log(5,"#m_DblePonct: " .. #m_DblePonct .. "\n")
 
-        table.insert(m_DblePoints,":")
-        table.insert(m_DblePoints,";")
-		aegisub.log(5,"#m_DblePoints: " .. #m_DblePoints .. "\n")
+        table.insert(m_DblePtsnCo,":")
+        table.insert(m_DblePtsnCo,";")
+		table.insert(m_DblePtsnCo,"%")
+		aegisub.log(5,"#m_DblePtsnCo: " .. #m_DblePtsnCo .. "\n")
 
         table.insert(m_PointVirgule,".")
         table.insert(m_PointVirgule,",")
@@ -120,7 +149,7 @@
 	-- @subs: table des sous-titres
 	-- @iTypeGuillemets: type de guillemets utilisés (1 = guillemets FR (« ») ; 2 = guillemets anglais (" "))
 	-- return: /
-	function CorrigePonctuationMain(subs, iTypeGuillemets)
+	function CorrigePonctuationMain(subs, iTypeGuillemets, iUseEspaceInsec, iUseSuspChar, iUseApost)
 	
 		local firstlineIdx=nil -- indice de première ligne de sous titre
 		local sub
@@ -139,7 +168,7 @@
 				end
 				
 				if not sub.comment then
-					Text = CorrigePonctLigne(sub.text, iTypeGuillemets)
+					Text = CorrigePonctLigne(sub.text, iTypeGuillemets, iUseEspaceInsec, iUseSuspChar, iUseApost)
 					sub.text = Text
 					subs[i] = sub
 				end
@@ -156,7 +185,7 @@
 	-- @iText : texte sur lequel on cherche à corriger la ponctuation
 	-- @iTypeGuillements : type de guillemets utilisés (1 = guillemets FR (« ») ; 2 = guillemets anglais (" "))
 	-- @return : Ligne avec ponctuation corrigée
-	function CorrigePonctLigne(iText, iTypeGuillements)
+	function CorrigePonctLigne(iText, iTypeGuillements, iUseEspaceInsec, iUseSuspChar, iUseApost)
 		local MainStr = iText
 		local splitstringtext, splitstringtag = {}, {}
 		local tmpsplitstring = {}
@@ -277,8 +306,8 @@
 		
 		-- On traite le cas des doubles ponctuations :
 		aegisub.log(5,"On traite le cas des doubles ponctuations :\n")
-		for ifor1 = 1, #m_DblePoints do
-			tmpstring = m_DblePoints[ifor1]
+		for ifor1 = 1, #m_DblePtsnCo do
+			tmpstring = m_DblePtsnCo[ifor1]
 			MainStr = MainStr:Replace(tmpstring, " " .. tmpstring .. " ")
 		end	
 		aegisub.log(5,MainStr .. "\n\n")		
@@ -384,8 +413,8 @@
 			MainStr = MainStr:Replace(tmpstring .. " )", tmpstring .. ")")
 		end	
 
-		for ifor1 = 1, #m_DblePoints do
-			tmpstring = m_DblePoints[ifor1]
+		for ifor1 = 1, #m_DblePtsnCo do
+			tmpstring = m_DblePtsnCo[ifor1]
 			MainStr = MainStr:Replace(tmpstring .. " )", tmpstring .. ")")
 		end	
 		aegisub.log(5,MainStr .. "\n\n")
@@ -400,10 +429,43 @@
 		end
 		aegisub.log(5,MainStr .. "\n\n")
 		
+		-- rectification d'effet de bord sur le % :
+		aegisub.log(5,"rectification d'effet de bord sur le %\n")
+		for ifor1 = 1, #m_PointVirgule do
+			tmpstring = m_PointVirgule[ifor1]
+			MainStr = MainStr:Replace("% " .. tmpstring, "%" .. tmpstring)
+		end		
+		
 		if ProblemeGuillemets then
 			aegisub.log(5,"Notification de problème de guillemets\n")
 			MainStr = "\{ErrGuillemets\}" .. MainStr
-		end	
+		end			
+		
+		-- Prise en compte des préférences :
+		if iUseSuspChar then
+			MainStr = MainStr:Replace("...", "…")
+		end
+		
+		if iUseEspaceInsec then
+			for ifor1 = 1, #m_DblePonct do
+				tmpstring = m_DblePonct[ifor1]
+				MainStr = MainStr:Replace(" " .. tmpstring, " " .. tmpstring)
+				MainStr = MainStr:Replace(" " .. TagReplacement .. tmpstring, " " .. tmpstring)
+			end
+			for ifor1 = 1, #m_DblePtsnCo do
+				tmpstring = m_DblePtsnCo[ifor1]
+				MainStr = MainStr:Replace(" " .. tmpstring, " " .. tmpstring)
+				MainStr = MainStr:Replace(" " .. TagReplacement .. tmpstring, " " .. tmpstring)
+			end
+		end
+		
+		if iUseApost then
+			MainStr = MainStr:Replace("'", "’")
+		else
+			MainStr = MainStr:Replace("’", "'")
+		end		
+		
+		
 		
 		-- On replace les tags à leur place :
 		aegisub.log(5,"On replace les tags à leur place :\n")
@@ -413,6 +475,7 @@
 		for ifor1 = 2, #splitstringtext do
 			MainStr = MainStr .. splitstringtag[ifor1 - 1] .. splitstringtext[ifor1]
 		end
+		
 		aegisub.log(5,MainStr .. "\n\n")
 		aegisub.log(5,"\n\n")
 		return MainStr
