@@ -18,12 +18,13 @@
 ]]
 
 	script_author = "LeSaint"
-	script_version = "1.1"
+	script_version = "1.2"
 	script_name = "Correction Ponctuation v" .. script_version
 	script_description = "Corrige la ponctuation du script courant."
-	script_modified = "29th March 2012"
+	script_modified = "20th May 2012"
 
 	m_Ponctuation = {}
+	m_CurrencyUnits = {}
 	m_DblePonct = {}
 	m_DblePtsnCo = {}
 	m_PointVirgule = {}
@@ -123,6 +124,10 @@
         table.insert(m_Ponctuation,"'")
 		table.insert(m_Ponctuation,"’")
 		table.insert(m_Ponctuation,"%")
+		table.insert(m_Ponctuation,"$")
+		table.insert(m_Ponctuation,"€")
+		table.insert(m_Ponctuation,"£")	
+		table.insert(m_Ponctuation,"¥")			
 		
 		aegisub.log(5,"#m_Ponctuation: " .. #m_Ponctuation .. "\n")
 
@@ -133,8 +138,18 @@
         table.insert(m_DblePtsnCo,":")
         table.insert(m_DblePtsnCo,";")
 		table.insert(m_DblePtsnCo,"%")
+		table.insert(m_DblePtsnCo,"$")
+		table.insert(m_DblePtsnCo,"€")
+		table.insert(m_DblePtsnCo,"£")
+		table.insert(m_DblePtsnCo,"¥")
 		aegisub.log(5,"#m_DblePtsnCo: " .. #m_DblePtsnCo .. "\n")
 
+		table.insert(m_CurrencyUnits,"%")
+		table.insert(m_CurrencyUnits,"$")
+		table.insert(m_CurrencyUnits,"€")
+		table.insert(m_CurrencyUnits,"£")		
+		aegisub.log(5,"#m_CurrencyUnits: " .. #m_CurrencyUnits .. "\n")
+		
         table.insert(m_PointVirgule,".")
         table.insert(m_PointVirgule,",")
 		aegisub.log(5,"#m_PointVirgule: " .. #m_PointVirgule .. "\n")
@@ -189,7 +204,7 @@
 		local MainStr = iText
 		local splitstringtext, splitstringtag = {}, {}
 		local tmpsplitstring = {}
-		local SuspReplacement = "&µ_|£$#"
+		local SuspReplacement = "&µ_|#_#_"
 		local TagReplacement = '¤'
 		local ifor1, ifor2
 		local tmpstring, tmpstring2
@@ -228,7 +243,7 @@
 			MainStr = MainStr .. TagReplacement .. splitstringtext[ifor1]
 		end
 		aegisub.log(5,MainStr .. "\n\n")
-	
+		
 		-- Retrait des espaces bizarres :
 		aegisub.log(5,"Retrait des espaces bizarres :\n")
 		
@@ -324,6 +339,8 @@
 		aegisub.log(5,"On remplace les guillemets anglais par des guillemets droits :\n")
 		MainStr = MainStr:Replace('“', '"') -- remplacement du guillemet anglais d'ouverture
 		MainStr = MainStr:Replace('”', '"') -- remplacement du guillemet anglais de fermeture
+		MainStr = MainStr:Replace("''", '"') -- remplacement des doubles apostrophes en guillemets
+		MainStr = MainStr:Replace("’’", '"') -- remplacement des doubles apostrophes en guillemets
 		aegisub.log(5,MainStr .. "\n\n")
 		
 		-- On remplace les guillemets anglais par des français :
@@ -429,17 +446,32 @@
 		end
 		aegisub.log(5,MainStr .. "\n\n")
 		
-		-- rectification d'effet de bord sur le % :
-		aegisub.log(5,"rectification d'effet de bord sur le %\n")
+		-- rectification d'effet de bord sur le % et les monnaies :
+		aegisub.log(5,"rectification d'effet de bord sur le % et les monnaies\n")
+		for ifor1 = 1, #m_CurrencyUnits do
+			tmpstring = m_CurrencyUnits[ifor1]
+			for ifor2 = 1, #m_PointVirgule do
+				tmpstring2 = m_PointVirgule[ifor2]
+				MainStr = MainStr:Replace(tmpstring .. " " .. tmpstring2, tmpstring .. tmpstring2)
+			end		
+		end
+		
+		-- rectification d'effet de bord sur les chiffres à virgule
+		aegisub.log(5,"rectification d'effet de bord sur les nombres rééls\n")
 		for ifor1 = 1, #m_PointVirgule do
 			tmpstring = m_PointVirgule[ifor1]
-			MainStr = MainStr:Replace("% " .. tmpstring, "%" .. tmpstring)
-		end		
+			MainStr = MainStr:gsub("(%d+)%" .. tmpstring .. "%s(%d+)","%1%" .. tmpstring .. "%2")
+		end			
 		
 		if ProblemeGuillemets then
 			aegisub.log(5,"Notification de problème de guillemets\n")
 			MainStr = "\{ErrGuillemets\}" .. MainStr
 		end			
+		
+		-- cas particulier des acronymes :
+		aegisub.log(5,"Cas particulier des acronymes\n")
+		MainStr=MainStr:gsub("(%u)%. (%u)%.","%1%.%2%.")
+		MainStr=MainStr:gsub("(%u)%. (%u)%.","%1%.%2%.")
 		
 		-- Prise en compte des préférences :
 		if iUseSuspChar then
