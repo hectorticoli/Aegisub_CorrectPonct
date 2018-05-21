@@ -18,10 +18,10 @@
 ]]
 
 	script_author = "LeSaint"
-	script_version = "1.0 beta2"
+	script_version = "1.1"
 	script_name = "Correction Ponctuation v" .. script_version
 	script_description = "Corrige la ponctuation du script courant."
-	script_modified = "20th November 2011"
+	script_modified = "29th March 2012"
 
 	m_Ponctuation = {}
 	m_DblePonct = {}
@@ -389,7 +389,7 @@
 		-- Si on a des retours à la ligne par \N, on vérifie qu'il n'y a pas d'espace autour :
 		aegisub.log(5,"Si on a des retours à la ligne par \\N, on vérifie qu'il n'y a pas d'espace autour :\n")
 		MainStr = MainStr:Replace(" \\N", "\\N")
-		MainStr = MainStr:Replace("\N ", "\\N")
+		MainStr = MainStr:Replace("\\N ", "\\N")
 		MainStr = MainStr:Replace(" \\n", "\\n")
 		MainStr = MainStr:Replace("\\n ", "\\n")
 		aegisub.log(5,MainStr .. "\n\n")
