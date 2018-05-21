@@ -1,0 +1,12 @@
+Descriptif des fichiers de tests du script CorrectPonc.lua (tests de non regression, dans le cas d'améliorations/corrections ultérieures) :
+Fichiers réalisés pour la version 1.4 du script, le 08/09/2014 par LeSaint
+CorrectPonct_Out4.ass réalisé avec la version 1.5 du script, le 14/12/2014 par LeSaint
+
+Fichier d'entrée de référence :
+- CorrectPoncTest_Input.ass : Fichier témoin contenant les différentes erreurs types gérées par le script
+
+Fichiers résultats de référence :
+- CorrectPonct_Out1.ass : Référence de correction, utilisant les guillemets français, et tous les autres paramètres décochés.
+- CorrectPonct_Out2.ass : Référence de correction, utilisant les guillemets français, et tous les autres paramètres cochés, sans les espaces fines
+- CorrectPonct_Out3.ass : Référence de correction, utilisant les guillemets droits, et tous les autres paramètres décochés.
+- CorrectPonct_Out4.ass : Référence de correction, utilisant les guillemets français, et tous les autres paramètres cochés, avec les espaces fines
