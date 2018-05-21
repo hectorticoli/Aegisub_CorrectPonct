@@ -1,6 +1,6 @@
 ﻿--[[
 	 CorrectPonct
-	 Copyright (C) 2011 LeSaint
+	 Copyright (C) 2014 LeSaint
 
 	 To contact me (bug report / evol) : LeSaint_Fansub {at} hotmail {dot} fr
 	 This program is free software: you can redistribute it and/or modify
@@ -19,6 +19,9 @@
 
 --[[
 Release Note:
+v1.5
+- prise en charge de l'espace insécable fine (utilisée pour le point virgule, le point d'exclamation, le point d'interrogation), avec espace insécable pour les deux-point et les guillemets
+
 v1.4
 - correction pour prise en charge nouvelle version aegisub (à partir de 3.1)
 
@@ -40,14 +43,15 @@ v1.0beta2 :
 ]]
 
 	script_author = "LeSaint"
-	script_version = "1.4"
+	script_version = "1.5"
 	script_name = "Correction Ponctuation v" .. script_version
 	script_description = "Corrige la ponctuation du script courant."
-	script_modified = "8th Sept 2014"
+	script_modified = "14th Dec 2014"
 
 	m_Ponctuation = {}
 	m_CurrencyUnits = {}
 	m_DblePonct = {}
+	m_DblePonctFine = {}
 	m_DblePtsnCo = {}
 	m_PointVirgule = {}
 	m_GuillemetsFR = {}
@@ -83,25 +87,35 @@ v1.0beta2 :
 				x = 1, y = 2, width = 2, height = 2,
 				items = {"Français (« »)", 'Droits (" ")'}, value = "Français (« »)", hint = "Type de guillemets utilisés."
 			},
-
-			EspInsec = {
-				class = "checkbox", name = "EspInsec", 
-				label = "Utiliser l'espace insécable avant les double ponctuation",
-				x = 0, y = 4, width = 4, height = 1,
-				value = UseEspaceInsec, hint = "Utiliser l'espace insécable avant les double ponctuation"
-			},		
 			SuspChar = {
 				class = "checkbox", name = "SuspChar", 
 				label = "Utiliser … au lieu de ...",
-				x = 0, y = 5, width = 1, height = 1,
+				x = 0, y = 4, width = 1, height = 1,
 				value = UseSuspChar, hint = "Utiliser … au lieu de ..."
 			},
 			Apost = {
 				class = "checkbox", name = "Apost", 
 				label = 'Utiliser ' .. "’" .. ' au lieu de ' .. "'",
-				x = 1, y = 5, width = 1, height = 1,
+				x = 1, y = 4, width = 1, height = 1,
 				value = UseRealApostroph, hint = 'Utiliser ' .. "’" .. ' au lieu de ' .. "'"
-			}			
+			},
+			EspInsec = {
+				class = "checkbox", name = "EspInsec", 
+				label = "Utiliser l'espace insécable avant les double ponctuation",
+				x = 0, y = 5, width = 4, height = 1,
+				value = UseEspaceInsec, hint = "Utiliser l'espace insécable avant les double ponctuation"
+			},		
+			t_fineEspLabel = {
+				class = "label",
+				x = 0, y = 6, width = 1, height = 1,
+				label = "Espace insécable fine : "
+			},			
+			t_espfine = {
+				class = "dropdown", name = "t_espfine",
+				x = 1, y = 6, width = 2, height = 1,
+				items = {"Oui", 'Non'}, value = "Oui", hint = "Indique si l'espace insécable fine doit être utilisée."
+			}
+		
 		}
 		return conf
 	end	
@@ -114,6 +128,7 @@ v1.0beta2 :
 	function load_macro_ponct(subs,sel)
 		local IdxGuil
 		local buttons = {"OK", "Annuler"}
+		local UseEspInsecFine=false
 		ok, config = aegisub.dialog.display(create_ponct_config(subs), buttons)
 		
 		if ok=="OK" or ok==true then
@@ -123,7 +138,13 @@ v1.0beta2 :
 			else
 				IdxGuil = eTypeGuillemets.GuillemetsDroits
 			end
-			CorrigePonctuationMain(subs, IdxGuil, config.EspInsec, config.SuspChar, config.Apost)
+			if config.t_espfine == "Oui" then
+				UseEspInsecFine = true
+			else
+				UseEspInsecFine = false
+			end			
+			
+			CorrigePonctuationMain(subs, IdxGuil, config.EspInsec, UseEspInsecFine , config.SuspChar, config.Apost)
 			aegisub.set_undo_point("Correction ponctuation")
 		end			
 	end
@@ -167,6 +188,11 @@ v1.0beta2 :
 		table.insert(m_DblePtsnCo,"¥")
 		aegisub.log(5,"#m_DblePtsnCo: " .. #m_DblePtsnCo .. "\n")
 
+        table.insert(m_DblePonctFine,"!")
+        table.insert(m_DblePonctFine,"?")	
+        table.insert(m_DblePonctFine,";")			
+		aegisub.log(5,"#m_DblePonctFine: " .. #m_DblePonctFine .. "\n")		
+		
 		table.insert(m_CurrencyUnits,"%")
 		table.insert(m_CurrencyUnits,"$")
 		table.insert(m_CurrencyUnits,"€")
@@ -187,7 +213,7 @@ v1.0beta2 :
 	-- @subs: table des sous-titres
 	-- @iTypeGuillemets: type de guillemets utilisés (1 = guillemets FR (« ») ; 2 = guillemets anglais (" "))
 	-- return: /
-	function CorrigePonctuationMain(subs, iTypeGuillemets, iUseEspaceInsec, iUseSuspChar, iUseApost)
+	function CorrigePonctuationMain(subs, iTypeGuillemets, iUseEspaceInsec, iUseEspInsecFine, iUseSuspChar, iUseApost)
 	
 		local firstlineIdx=nil -- indice de première ligne de sous titre
 		local sub
@@ -206,7 +232,7 @@ v1.0beta2 :
 				end
 				
 				if not sub.comment then
-					Text = CorrigePonctLigne(sub.text, iTypeGuillemets, iUseEspaceInsec, iUseSuspChar, iUseApost)
+					Text = CorrigePonctLigne(sub.text, iTypeGuillemets, iUseEspaceInsec, iUseEspInsecFine, iUseSuspChar, iUseApost)
 					sub.text = Text
 					subs[i] = sub
 				end
@@ -222,8 +248,12 @@ v1.0beta2 :
 	-- purpose: Fonction transformant une ligne en tableau, sur la base d'un séparateur. S'utilise comme toute autre fonction de la classe string.
 	-- @iText : texte sur lequel on cherche à corriger la ponctuation
 	-- @iTypeGuillements : type de guillemets utilisés (1 = guillemets FR (« ») ; 2 = guillemets anglais (" "))
+	-- @iUseEspaceInsec : Indique si les espaces insécables sont utilisés
+	-- @iUseEspInsecFine : Si les espaces insécables sont utilisés, indique si l'espace insécable fine doit être utilisée
+	-- @iUseSuspChar : indique si le caractère "…" doit être utilisé pour les points de suspension
+	-- @iUseApost : indique si le caractère apostrophe doit être utilisé
 	-- @return : Ligne avec ponctuation corrigée
-	function CorrigePonctLigne(iText, iTypeGuillements, iUseEspaceInsec, iUseSuspChar, iUseApost)
+	function CorrigePonctLigne(iText, iTypeGuillements, iUseEspaceInsec, iUseEspInsecFine, iUseSuspChar, iUseApost)
 		local MainStr = iText
 		local splitstringtext, splitstringtag = {}, {}
 		local tmpsplitstring = {}
@@ -271,6 +301,8 @@ v1.0beta2 :
 		aegisub.log(5,"Retrait des espaces bizarres :\n")
 		
         MainStr = MainStr:Replace(" ", " ") -- oui oui... ces deux espaces ne sont pas pareils... et le premier n'est apparemment pas l'insécable...
+        MainStr = MainStr:Replace(" ", " ") -- remplacement de l'espace insécable fine				
+        MainStr = MainStr:Replace(" ", " ") -- remplacement de l'espace ponctuation	
         MainStr = MainStr:Replace(" ", " ") -- remplacement de l'espace insécable	
 		aegisub.log(5,MainStr .. "\n\n")		
 		
@@ -514,6 +546,13 @@ v1.0beta2 :
 			end
 			MainStr = MainStr:Replace("« ", "« ")
 			MainStr = MainStr:Replace(" »", " »")	
+			
+			if iUseEspInsecFine then
+				for ifor1 = 1, #m_DblePonctFine do
+					tmpstring = m_DblePonctFine[ifor1]
+					MainStr = MainStr:Replace(" " .. tmpstring, " " .. tmpstring)
+				end					
+			end
 		end
 		
 		if iUseApost then
@@ -521,8 +560,7 @@ v1.0beta2 :
 		else
 			MainStr = MainStr:Replace("’", "'")
 		end		
-		
-		
+
 		
 		-- On replace les tags à leur place :
 		aegisub.log(5,"On replace les tags à leur place :\n")
