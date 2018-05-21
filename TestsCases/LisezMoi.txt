@@ -1,12 +1,20 @@
 Descriptif des fichiers de tests du script CorrectPonc.lua (tests de non regression, dans le cas d'améliorations/corrections ultérieures) :
 Fichiers réalisés pour la version 1.4 du script, le 08/09/2014 par LeSaint
 CorrectPonct_Out4.ass réalisé avec la version 1.5 du script, le 14/12/2014 par LeSaint
+Corrections liées à la version 1.6 du script, amenant une mise à jour des fichiers de référence input et output (notamment vérification de non regression à l'exécution multiple).
 
 Fichier d'entrée de référence :
 - CorrectPoncTest_Input.ass : Fichier témoin contenant les différentes erreurs types gérées par le script
 
 Fichiers résultats de référence :
-- CorrectPonct_Out1.ass : Référence de correction, utilisant les guillemets français, et tous les autres paramètres décochés.
-- CorrectPonct_Out2.ass : Référence de correction, utilisant les guillemets français, et tous les autres paramètres cochés, sans les espaces fines
-- CorrectPonct_Out3.ass : Référence de correction, utilisant les guillemets droits, et tous les autres paramètres décochés.
-- CorrectPonct_Out4.ass : Référence de correction, utilisant les guillemets français, et tous les autres paramètres cochés, avec les espaces fines
+- CorrectPonct_Out1_1.ass : Référence de correction, utilisant les guillemets français, et tous les autres paramètres décochés.
+- CorrectPonct_Out1_2.ass : Référence de correction, reexécuté dans la foulée du précédent, utilisant les mêmes paramètres.
+
+- CorrectPonct_Out2_1.ass : Référence de correction, utilisant les guillemets français, et tous les autres paramètres cochés, sans les espaces fines
+- CorrectPonct_Out2_2.ass : Référence de correction, reexécuté dans la foulée du précédent, utilisant les mêmes paramètres.
+
+- CorrectPonct_Out3_1.ass : Référence de correction, utilisant les guillemets droits, et tous les autres paramètres décochés.
+- CorrectPonct_Out3_2.ass : Référence de correction, reexécuté dans la foulée du précédent, utilisant les mêmes paramètres.
+
+- CorrectPonct_Out4_1.ass : Référence de correction, exécuté 2 fois d'affilé, utilisant les guillemets français, et tous les autres paramètres cochés, avec les espaces fines
+- CorrectPonct_Out4_1.ass : Référence de correction, reexécuté dans la foulée du précédent, utilisant les mêmes paramètres.

@@ -9,7 +9,7 @@ Collisions: Normal
 YCbCr Matrix: None
 Video Zoom Percent: 1.000000
 Scroll Position: 0
-Active Line: 0
+Active Line: 16
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
@@ -19,18 +19,19 @@ Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 Dialogue: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,,Test de ponctuation, avec faute de virgule. Et de point.
 Dialogue: 0,0:00:05.00,0:00:07.00,Default,,0,0,0,,Test de ponctuation avec double espace
-Dialogue: 0,0:00:07.00,0:00:09.00,Default,,0,0,0,,Espaces autour de double ponctuation et parenthèse (1) !?!
-Dialogue: 0,0:00:09.00,0:00:11.00,Default,,0,0,0,,Double ponctuation (2) : et autre test ; et enfin points suspension... ou points de suspension...
+Dialogue: 0,0:00:07.00,0:00:09.00,Default,,0,0,0,,Espaces autour de double ponctuation et parenthèse (1) !?!
+Dialogue: 0,0:00:09.00,0:00:11.00,Default,,0,0,0,,Double ponctuation (2) : et autre test ; et enfin points suspension… ou points de suspension…
 Dialogue: 0,0:00:11.00,0:00:13.00,Default,,0,0,0,,Ponctuation après parenthèse fermante (parenthèse).
-Dialogue: 0,0:00:13.00,0:00:15.00,Default,,0,0,0,,Pas d'espace autour de l'apostrophe
-Dialogue: 0,0:00:15.00,0:00:17.00,Default,,0,0,0,,« guillemets » et autres « guillemets »
+Dialogue: 0,0:00:13.00,0:00:15.00,Default,,0,0,0,,Pas d’espace autour de l’apostrophe
+Dialogue: 0,0:00:15.00,0:00:17.00,Default,,0,0,0,,« guillemets » et autres « guillemets »
 Dialogue: 0,0:00:17.00,0:00:19.00,Default,,0,0,0,,Espaces autour des\Nsauts de lignes
 Dialogue: 0,0:00:19.00,0:00:21.00,Default,,0,0,0,,Bugfix avec saut de ligne\N(directement suivi de parenthèse)
 Comment: 0,0:00:21.00,0:00:23.00,Default,,0,0,0,,Ligne commentaire avec des  erreurs(ligne ignorée)..
-Dialogue: 0,0:00:23.00,0:00:25.00,Default,,0,0,0,,{ErrGuillemets}Test du cas de « guillemets impairs
+Dialogue: 0,0:00:23.00,0:00:25.00,Default,,0,0,0,,{ErrGuillemets}Test du cas de « guillemets impairs
 Dialogue: 0,0:00:25.00,0:00:27.00,Default,,0,0,0,,Test sur les chiffres 2.5, ou 6,3
-Dialogue: 0,0:00:27.00,0:00:29.00,Default,,0,0,0,,Test des symboles monétaires : 50 $, 50 £, 50 €, 50 ¥
+Dialogue: 0,0:00:27.00,0:00:29.00,Default,,0,0,0,,Test des symboles monétaires : 50 $, 50 £, 50 €, 50 ¥
 Dialogue: 0,0:00:29.00,0:00:31.00,Default,,0,0,0,,Gestion (voire correction) des acronymes tels que A.C.M.E.
-Dialogue: 0,0:00:31.00,0:00:33.00,Default,,0,0,0,,Interprétation de double apostrophe en tant que des « guillemets »
-Dialogue: 0,0:00:33.00,0:00:35.00,Default,,0,0,0,,Gestion des pourcentages 50 %
-Dialogue: 0,0:00:35.00,0:00:37.00,Default,,0,0,0,,
+Dialogue: 0,0:00:31.00,0:00:33.00,Default,,0,0,0,,Interprétation de double apostrophe en tant que des « guillemets »
+Dialogue: 0,0:00:33.00,0:00:35.00,Default,,0,0,0,,Gestion des pourcentages 50 %
+Dialogue: 0,0:00:35.00,0:00:37.00,Default,,0,0,0,,Test de guillemets autour de points de suspension et d’apostrophes : d’« Albert »… d’« Albert »…
+Dialogue: 0,0:00:37.00,0:00:39.00,Default,,0,0,0,,Test de guillemets autour de points de suspension et d’apostrophes (2) : d’« Albert »…
