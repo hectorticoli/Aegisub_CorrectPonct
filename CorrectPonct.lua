@@ -158,7 +158,7 @@ v1.0beta2 :
 				UseEspInsecFine = false
 			end			
 			
-			CorrigePonctuationMain(subs, IdxGuil, config.EspInsec, UseEspInsecFine , config.SuspChar, config.Apost)
+			CorrigePonctuationMain(subs, sel, IdxGuil, config.EspInsec, UseEspInsecFine , config.SuspChar, config.Apost)
 			aegisub.set_undo_point("Correction ponctuation")
 		end			
 	end
@@ -237,7 +237,7 @@ v1.0beta2 :
 	-- @subs: table des sous-titres
 	-- @iTypeGuillemets: type de guillemets utilisés (1 = guillemets FR (« ») ; 2 = guillemets anglais (" "))
 	-- return: /
-	function CorrigePonctuationMain(subs, iTypeGuillemets, iUseEspaceInsec, iUseEspInsecFine, iUseSuspChar, iUseApost)
+	function CorrigePonctuationMain(subs, sel, iTypeGuillemets, iUseEspaceInsec, iUseEspInsecFine, iUseSuspChar, iUseApost)
 	
 		local firstlineIdx=nil -- indice de première ligne de sous titre
 		local sub
@@ -247,7 +247,7 @@ v1.0beta2 :
 		
 		aegisub.progress.task("Correction de ponctuation en cours")
 		aegisub.progress.set(0)
-		for i = 1, #subs, 1 do
+		for k, i in ipairs(sel) do
 			sub = subs[i]		
 			
 			if sub.class=="dialogue" then
